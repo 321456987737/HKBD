@@ -1,0 +1,62 @@
+// components/ProductImageModal.jsx
+"use client";
+import { useState } from 'react';
+import Image from 'next/image';
+import { XMarkIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
+
+export default function ProductImageModal({ images, initialIndex = 0, onClose }) {
+  const [currentIndex, setCurrentIndex] = useState(initialIndex);
+
+  const goToPrevious = () => {
+    setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+  };
+
+  const goToNext = () => {
+    setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4">
+      <button 
+        onClick={onClose}
+        className="absolute top-4 right-4 text-white p-2 rounded-full hover:bg-gray-800"
+      >
+        <XMarkIcon className="w-8 h-8" />
+      </button>
+      
+      <div className="relative w-full max-w-4xl h-full max-h-[90vh]">
+        <Image
+          src={images[currentIndex]}
+          alt={`Product image ${currentIndex + 1}`}
+          fill
+          className="object-contain"
+          priority
+        />
+        
+        <button 
+          onClick={goToPrevious}
+          className="absolute left-4 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70"
+        >
+          <ChevronLeftIcon className="w-8 h-8" />
+        </button>
+        
+        <button 
+          onClick={goToNext}
+          className="absolute right-4 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70"
+        >
+          <ChevronRightIcon className="w-8 h-8" />
+        </button>
+      </div>
+      
+      <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2">
+        {images.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrentIndex(index)}
+            className={`w-3 h-3 rounded-full ${currentIndex === index ? 'bg-white' : 'bg-gray-500'}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}

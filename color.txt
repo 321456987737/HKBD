@@ -1,0 +1,5 @@
+bg color = #FDFAF6 Clean, subtle off-white that's easy on the eyes
+newtral = #FAF1E6 card background and other product bg
+soothing = #E4EFE7 Slight contrast for hover states, cards, etc.
+dark = #99BC85;Muted green is ideal for branding and buttons
+for other #2C2C2C 
