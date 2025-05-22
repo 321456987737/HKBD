@@ -108,7 +108,7 @@ export default function UserProfilePage() {
             <h2 className="text-2xl font-bold mb-6">Order History</h2>
             <div className="border rounded-lg p-8 text-center">
               <ShoppingBagIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500 mb-2">You haven't placed any orders yet</p>
+              <p className="text-gray-500 mb-2">You havent placed any orders yet</p>
               <button
                 onClick={() => router.push('/shop')}
                 className="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition"
