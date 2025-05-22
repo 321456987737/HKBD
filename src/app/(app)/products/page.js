@@ -1,19 +1,17 @@
 "use client"
 import { useSearchParams } from "next/navigation";
-
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import axios from "axios";
 import Image from "next/image";
 import Link from "next/link";
 
-const ProductsPage = () => {
+function ProductsContent() {
   const searchParams = useSearchParams();
   const category = searchParams.get("category");
   const subcategory = searchParams.get("subcategory");
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  console.log(products);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -22,7 +20,6 @@ const ProductsPage = () => {
         setError("No category specified");
         return;
       }
-
       setLoading(true);
       setError(null);
 
@@ -31,7 +28,6 @@ const ProductsPage = () => {
         if (subcategory) {
           url += `&subcategory=${subcategory}`;
         }
-
         const res = await axios.get(url);
 
         if (res.data.success) {
@@ -48,7 +44,7 @@ const ProductsPage = () => {
     };
 
     fetchProducts();
-  }, [category, subcategory]); // <== include subcategory as a dependency
+  }, [category, subcategory]);
 
   if (loading) {
     return (
@@ -78,8 +74,6 @@ const ProductsPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
             {products.map((product) => {
               const discountedPrice = product.discountedPrice;
-              console.log(product, "product");
-
               return (
                 <Link
                   href={`/singalproduct/${product._id}?category=${category}&subcategory=${product.subcategory}`}
@@ -142,6 +136,12 @@ const ProductsPage = () => {
       </div>
     </>
   );
-};
+}
 
-export default ProductsPage;
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={<div className="flex justify-center items-center min-h-screen"><div className="animate-spin rounded-full h-12 w-12 "></div></div>}>
+      <ProductsContent />
+    </Suspense>
+  );
+}
