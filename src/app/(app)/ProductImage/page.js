@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { XMarkIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
 
-export default function ProductImageModal({ images, initialIndex = 0, onClose }) {
+export default function ProductImageModal({ images, initialIndex = null, onClose }) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
 
   const goToPrevious = () => {
