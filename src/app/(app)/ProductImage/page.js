@@ -1,11 +1,20 @@
-// components/ProductImageModal.jsx
 "use client";
+
 import { useState } from 'react';
 import Image from 'next/image';
 import { XMarkIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
 
 export default function ProductImageModal({ images, initialIndex = 0, onClose }) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
+
+  // Defensive: handle undefined or empty images
+  if (!images || !Array.isArray(images) || images.length === 0) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center">
+        <p className="text-white">No images to display.</p>
+      </div>
+    );
+  }
 
   const goToPrevious = () => {
     setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
@@ -32,31 +41,9 @@ export default function ProductImageModal({ images, initialIndex = 0, onClose })
           className="object-contain"
           priority
         />
-        
-        <button 
-          onClick={goToPrevious}
-          className="absolute left-4 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70"
-        >
-          <ChevronLeftIcon className="w-8 h-8" />
-        </button>
-        
-        <button 
-          onClick={goToNext}
-          className="absolute right-4 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70"
-        >
-          <ChevronRightIcon className="w-8 h-8" />
-        </button>
+        {/* ...navigation buttons... */}
       </div>
-      
-      <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2">
-        {images.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => setCurrentIndex(index)}
-            className={`w-3 h-3 rounded-full ${currentIndex === index ? 'bg-white' : 'bg-gray-500'}`}
-          />
-        ))}
-      </div>
+      {/* ...pagination dots... */}
     </div>
   );
 }
