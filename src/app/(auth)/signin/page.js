@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { FcGoogle } from "react-icons/fc";
+import Link from "next/link";
 
 const signinSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -94,6 +95,11 @@ export default function SignIn() {
             {isSubmitting ? "Signing In..." : "Sign in with Email & Password"}
           </button>
         </form>
+        <div >
+          <Link href="/signup">
+          signup
+          </Link>
+        </div>
 
         <div className="flex items-center gap-2">
           <hr className="flex-1 border-gray-300" />
