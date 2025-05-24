@@ -1,6 +1,7 @@
-"use client"
+"use client";
+
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,6 +10,7 @@ function ProductsContent() {
   const searchParams = useSearchParams();
   const category = searchParams.get("category");
   const subcategory = searchParams.get("subcategory");
+
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -20,6 +22,7 @@ function ProductsContent() {
         setError("No category specified");
         return;
       }
+
       setLoading(true);
       setError(null);
 
@@ -28,6 +31,7 @@ function ProductsContent() {
         if (subcategory) {
           url += `&subcategory=${subcategory}`;
         }
+
         const res = await axios.get(url);
 
         if (res.data.success) {
@@ -49,7 +53,7 @@ function ProductsContent() {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 "></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
       </div>
     );
   }
@@ -64,84 +68,77 @@ function ProductsContent() {
   }
 
   return (
-    <>
-      <div className=" mt-18">
-        {products.length === 0 ? (
-          <div className="text-center py-10">
-            <p className="text-gray-500">No products found in this category.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-            {products.map((product) => {
-              const discountedPrice = product.discountedPrice;
-              return (
-                <Link
-                  href={`/singalproduct/${product._id}?category=${category}&subcategory=${product.subcategory}`}
-                  key={product._id}
-                >
-                  <div
-                    key={product._id}
-                    className="group   overflow-hidden  bg-white"
-                  >
-                    {/* Product Image */}
-                    <div className="relative h-56 w-full bg-gray-100">
-                      {product.primaryimage ? (
-                        <Image
-                          src={product.primaryimage}
-                          alt={product.name}
-                          fill
-                          className="object-cover cursor-pointer  transition-transform duration-300"
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-400">
-                          No image
-                        </div>
-                      )}
-                      {Number(product.totaldiscount) > 0 && (
-                        <span className="absolute top-2 left-2 bg-red-600 text-white text-xs font-semibold px-2 py-1 rounded">
-                          {product.totaldiscount}% OFF
-                        </span>
-                      )}
-                    </div>
+    <div className="mt-18 px-4 py-6">
+      {products.length === 0 ? (
+        <div className="text-center py-10">
+          <p className="text-gray-500">No products found in this category.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {products.map((product) => {
+            const discountedPrice = product.discountedPrice;
 
-                    {/* Product Info */}
-                    <div className="p-4 space-y-1">
-                      <h2 className="font-semibold text-lg truncate capitalize text-gray-800">
-                        {product.name}
-                      </h2>
-                      <p className="text-sm text-gray-500 capitalize">
-                        {product.subcategory}
-                      </p>
-                      <div className="flex items-baseline gap-2 mt-1">
-                        <p className="text-lg font-bold text-gray-800">
-                          ${discountedPrice}
-                        </p>
-                        {Number(product.totaldiscount) > 0 && (
-                          <p className="text-sm text-gray-400 line-through">
-                            ${Number(product.originalprice)}
-                          </p>
-                        )}
+            return (
+              <Link
+                href={`/singalproduct/${product._id}?category=${category}&subcategory=${product.subcategory}`}
+                key={product._id}
+              >
+                <div className="group overflow-hidden bg-white rounded-lg shadow hover:shadow-lg transition-shadow">
+                  {/* Product Image */}
+                  <div className="relative h-56 w-full bg-gray-100">
+                    {product.primaryimage ? (
+                      <Image
+                        src={product.primaryimage}
+                        alt={product.name}
+                        fill
+                        className="object-cover cursor-pointer transition-transform duration-300"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400">
+                        No image
                       </div>
-                      <p className="text-sm text-green-600">
-                        In Stock: {product.stock}
-                      </p>
-                    </div>
+                    )}
+
+                    {Number(product.totaldiscount) > 0 && (
+                      <span className="absolute top-2 left-2 bg-red-600 text-white text-xs font-semibold px-2 py-1 rounded">
+                        {product.totaldiscount}% OFF
+                      </span>
+                    )}
                   </div>
-                </Link>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    </>
+
+                  {/* Product Info */}
+                  <div className="p-4 space-y-1">
+                    <h2 className="font-semibold text-lg truncate capitalize text-gray-800">
+                      {product.name}
+                    </h2>
+                    <p className="text-sm text-gray-500 capitalize">
+                      {product.subcategory}
+                    </p>
+                    <div className="flex items-baseline gap-2 mt-1">
+                      <p className="text-lg font-bold text-gray-800">
+                        ${discountedPrice}
+                      </p>
+                      {Number(product.totaldiscount) > 0 && (
+                        <p className="text-sm text-gray-400 line-through">
+                          ${Number(product.originalprice)}
+                        </p>
+                      )}
+                    </div>
+                    <p className="text-sm text-green-600">
+                      In Stock: {product.stock}
+                    </p>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 
 export default function ProductsPage() {
-  return (
-    <Suspense fallback={<div className="flex justify-center items-center min-h-screen"><div className="animate-spin rounded-full h-12 w-12 "></div></div>}>
-      <ProductsContent />
-    </Suspense>
-  );
+  return <ProductsContent />;
 }

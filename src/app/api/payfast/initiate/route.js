@@ -3,10 +3,10 @@ export async function POST(req) {
 
   const merchant_id = "10000100";
   const merchant_key = "46f0cd694581a";
-  const return_url = "https://hkbd.vercel.app/payment-success";
-  const cancel_url = "https://hkbd.vercel.app/payment-cancel";
-  const notify_url = "https://hkbd.vercel.app/api/payfast/ipn";
-   console.log(cartItems);
+  const return_url = "http://localhost:3000/payment-success";
+  const cancel_url = "https://localhost:3000/payment-cancel";
+  const notify_url = "https://localhost:3000/api/payfast/ipn";
+   
      const item_name = cartItems.map((item) => item.name).join(", ");
   const amount = total.toFixed(2);
   const data = {

@@ -13,19 +13,17 @@ export async function GET(request) {
         { status: 400 }
       );
     }
-
+    console.log(0)
+    //the client prmise is giving the error
     const client = await clientPromise;
+    console.log(1)
     const db = client.db("products");
     const productsCollection = db.collection(category);
-
-    // ✅ Add filtering conditionally
+    console.log(2)
     const filter = {};
-    if (subcategory) {
-      filter.subcategory = subcategory;
-    }
-
+    if (subcategory) filter.subcategory = subcategory;
     const products = await productsCollection.find(filter).toArray();
-
+    console.log(products)
     return NextResponse.json({
       success: true,
       products,

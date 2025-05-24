@@ -6,12 +6,13 @@ import { NextResponse } from "next/server";
 export async function POST(req) {
   try {
     const { username, email, password } = await req.json();
-
+    console.log(username, email, password);
     if (!username || !email || !password) {
       return NextResponse.json({ error: "All fields are required" }, { status: 400 });
     }
 
     const client = await clientPromise;
+
     const db = client.db("your_db_name");
     const usersCollection = db.collection("users");
 
