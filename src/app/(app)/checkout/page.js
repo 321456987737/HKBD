@@ -2,9 +2,10 @@
 import Image from "next/image";
 import images from "@/Assets/images";
 import Link from "next/link";
-import UseCartStore from "@/store/CartStore"; // adjust the path
+import UseCartStore from "@/store/CartStore";
 import { useState } from "react";
 import axios from "axios";
+
 export default function CheckoutPage() {
   const { cartItems, removeFromCart } = UseCartStore();
 
@@ -22,6 +23,12 @@ export default function CheckoutPage() {
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+
+  const total = cartItems.reduce(
+    (acc, item) => acc + item.price * item.quantity,
+    0
+  );
+
   const handlePlaceOrder = async () => {
     try {
       const response = await axios.post("/api/payfast/initiate", {
@@ -29,7 +36,6 @@ export default function CheckoutPage() {
         cartItems,
         total,
       });
-      console.log(response.data);
 
       const { url } = response.data;
       window.location.href = url; // redirect to PayFast
@@ -43,10 +49,11 @@ export default function CheckoutPage() {
     removeFromCart(id, size, color);
   };
 
-  const total = cartItems.reduce(
-    (acc, item) => acc + item.price * item.quantity,
-    0
-  );
+  // Prevent default form submission and call handlePlaceOrder
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    handlePlaceOrder();
+  };
 
   return (
     <>
@@ -65,7 +72,7 @@ export default function CheckoutPage() {
         {/* LEFT SIDE: Form */}
         <div className="w-full md:w-2/3">
           <h2 className="text-2xl font-semibold mb-6">Checkout</h2>
-          <form className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <form className="grid grid-cols-1 md:grid-cols-2 gap-4" onSubmit={handleSubmit}>
             <input
               name="email"
               value={formData.email}
@@ -217,7 +224,7 @@ export default function CheckoutPage() {
             </div>
             <div className="w-full flex items-center justify-center">
               <button
-                onClick={handlePlaceOrder}
+                type="submit"
                 className="bg-black px-6 py-2 cursor-pointer text-white flex items-center justify-center"
               >
                 Place Order
@@ -274,4 +281,4 @@ export default function CheckoutPage() {
       </div>
     </>
   );
-}
+};
