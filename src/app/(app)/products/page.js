@@ -1,5 +1,5 @@
 "use client";
-
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import axios from "axios";
@@ -140,5 +140,9 @@ function ProductsContent() {
 }
 
 export default function ProductsPage() {
-  return <ProductsContent />;
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ProductsContent />
+    </Suspense>
+  );
 }
