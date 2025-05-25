@@ -1,38 +1,62 @@
+// /app/api/payfast/ipn/route.js
+
 import clientPromise from "@/lib/dbConnect";
 import { NextResponse } from "next/server";
-export async function POST(req) {
-  const bodyText = await req.text();
-  const rawData = Object.fromEntries(new URLSearchParams(bodyText));
-  // const signature = rawData.signature;
-  // const passphrase = process.env.PAYFAST_PASSPHRASE || "";
+import { ObjectId } from "mongodb";
 
-  // Skip signature validation for now
-  console.log(rawData)
-  console.log(bodyText)
-  if (rawData.payment_status === "COMPLETE") {
-    try {
+export async function POST(req) {
+  try {
+    const bodyText = await req.text();
+    const rawData = Object.fromEntries(new URLSearchParams(bodyText));
+
+    if (rawData.payment_status === "COMPLETE") {
       const client = await clientPromise;
-      const db = client.db("OrderDB");
-      const orders = db.collection("orders");
- 
-      const existing = await orders.findOne({ payfast_payment_id: rawData.pf_payment_id });
-      if (existing) {
-        console.log("⚠️ Duplicate payment detected:", rawData.pf_payment_id);
+      const db = client.db("PaymentDB");
+      const orders = db.collection("paymentss");
+
+      const orderId = rawData.custom_str1;
+
+      const existingOrder = await orders.findOne({
+        payfast_payment_id: rawData.pf_payment_id
+      });
+
+      if (existingOrder) {
+        console.warn("⚠️ Duplicate payment detected:", rawData.pf_payment_id);
         return NextResponse.json({ success: true, message: "Duplicate payment" });
       }
 
-      await orders.insertOne({
-        ...rawData,
-        payfast_payment_id: rawData.pf_payment_id,
-        createdAt: new Date(),
+      const pending = await orders.findOne({
+        _id: new ObjectId(orderId),
+        status: "PENDING"
       });
 
-      console.log("✅ Payment complete and order saved for:", rawData.item_name);
-    } catch (err) {
-      console.error("❌ DB error:", err);
-      return NextResponse.json({ success: false, message: "DB error" }, { status: 500 });
-    }
-  }
+      if (!pending) {
+        console.error("❌ No pending order found for ID:", orderId);
+        return NextResponse.json({ success: false, message: "Order ID not found" }, { status: 404 });
+      }
 
-  return NextResponse.json({ success: true });
+      await orders.updateOne(
+        { _id: new ObjectId(orderId) },
+        {
+          $set: {
+            "payment.payfast_payment_id": rawData.pf_payment_id,
+            "payment.status": rawData.payment_status,
+            "payment.amount_gross": rawData.amount_gross,
+            "payment.amount_fee": rawData.amount_fee,
+            "payment.amount_net": rawData.amount_net,
+            "payment.completedAt": new Date(),
+            status: "COMPLETED"
+          }
+        }
+      );
+
+      console.log("✅ Payment completed and order finalized:", rawData.item_name);
+    }
+
+    return NextResponse.json({ success: true });
+
+  } catch (error) {
+    console.error("❌ Error processing IPN:", error);
+    return NextResponse.json({ success: false, message: "Server error" }, { status: 500 });
+  }
 }

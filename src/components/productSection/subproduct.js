@@ -17,7 +17,6 @@ const ProductSection = ({ title, images, category }) => {
   // Handle image click
   const handleClick = async (index) => {
     const subcategory = categoryMap[category]?.[index];
-    console.log(subcategory, category, index);
      if (!subcategory) {
        alert('Invalid subcategory');
        return;

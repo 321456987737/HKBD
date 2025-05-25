@@ -3,10 +3,12 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import Image from "next/image";
 import Link from "next/link";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, useSearchParams, useRouter } from "next/navigation";
 import UseCartStore from "../../../../store/CartStore";
+
 export default function Page() {
   const addToCartStore = UseCartStore((state) => state.addToCart);
+  const router = useRouter();
 
   const params = useParams();
   const searchParams = useSearchParams();
@@ -20,8 +22,8 @@ export default function Page() {
   const [error, setError] = useState(null);
 
   // User-selected values
-  const [selectedSize, setSelectedSize] = useState(null);
-  const [selectedColor, setSelectedColor] = useState(null);
+  const [selectedSize, setSelectedSize] = useState(""); // <-- fixed from []
+  const [selectedColor, setSelectedColor] = useState(""); // <-- fixed from []
   const [selectedQuantity, setSelectedQuantity] = useState(1);
 
   useEffect(() => {
@@ -49,7 +51,12 @@ export default function Page() {
     fetchProduct();
   }, [id, category, subcategory]);
 
-  const handleAdd = async () => {
+  const handleAdd = () => {
+    if (!selectedSize || !selectedColor) {
+      alert("Please select size and color.");
+      return;
+    }
+
     const payload = {
       id: product._id,
       name: product.name,
@@ -64,16 +71,19 @@ export default function Page() {
       subcategory: product.subcategory,
     };
 
-    try {
-      // await axios.post("/api/add-to-cart", payload);
-      addToCartStore(payload); // update store
-      alert("Product added to cart!");
-    } catch (err) {
-      console.error("Error adding to cart:", err);
-      alert("Failed to add to cart.");
+    addToCartStore(payload);
+    alert("Product added to cart!");
+  };
+
+  const handleBuyNow = () => {
+    if (!selectedSize || !selectedColor) {
+      alert("Please select size and color.");
+      return;
     }
-  }
-  
+
+    handleAdd(); // optionally add to cart as well
+    router.push("/checkout");
+  };
 
   if (loading)
     return (
@@ -84,13 +94,12 @@ export default function Page() {
         </div>
       </div>
     );
-  
 
   if (error) return <div>Error: {error}</div>;
   if (!product) return <div>Product not found</div>;
 
   const colors = product.color?.split(",") || [];
-  const allImages = [product.primaryimage, ...product.secondaryimage];
+  const allImages = [product.primaryimage, ...(product.secondaryimage || [])];
 
   return (
     <>
@@ -194,6 +203,7 @@ export default function Page() {
                       }`}
                       style={{ backgroundColor: color }}
                       title={color}
+                      aria-label={color}
                     />
                   ))}
                 </div>
@@ -207,7 +217,10 @@ export default function Page() {
                 >
                   Add to Cart
                 </button>
-                <button className="text-md cursor-pointer hover:scale-105 transition-all font-semibold px-4 py-2 rounded-md bg-black text-white">
+                <button
+                  onClick={handleBuyNow}
+                  className="text-md cursor-pointer hover:scale-105 transition-all font-semibold px-4 py-2 rounded-md bg-black text-white"
+                >
                   Buy Now
                 </button>
               </div>

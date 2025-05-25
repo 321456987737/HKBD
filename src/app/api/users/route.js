@@ -24,17 +24,3 @@ export async function GET(req) {
   }
 }
 
-// import { NextResponse } from "next/server";
-// import clientPromise from "@/lib/dbConnect";
-
-// export async function GET() {
-//    try{
-//       const client = await clientPromise;
-//       const db = client.db("your_db_name"); // 🔁 Replace with your DB name
-//       const collection = db.collection("users");
-//       const users = await collection.find({}).limit(3).toArray();
-//       return NextResponse.json({users});
-//    }catch(err){
-//     return NextResponse.json({error: err.message}, {status: 500})
-//    }
-// }

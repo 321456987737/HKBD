@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 export async function POST(req) {
   try {
     const { username, email, password } = await req.json();
-    console.log(username, email, password);
+    
     if (!username || !email || !password) {
       return NextResponse.json({ error: "All fields are required" }, { status: 400 });
     }
