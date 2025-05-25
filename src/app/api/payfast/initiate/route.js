@@ -38,9 +38,9 @@ export async function POST(req) {
     const payfastParams = {
       merchant_id: process.env.PAYFAST_MERCHANT_ID,
       merchant_key: process.env.PAYFAST_MERCHANT_KEY,
-      return_url: process.env.PAYFAST_RETURN_URL,
-      cancel_url: process.env.PAYFAST_CANCEL_URL,
-      notify_url: process.env.PAYFAST_NOTIFY_URL,
+      // return_url: process.env.PAYFAST_RETURN_URL,
+      // cancel_url: process.env.PAYFAST_CANCEL_URL,
+      // notify_url: process.env.PAYFAST_NOTIFY_URL,
       merchant_id: process.env.merchant_id,
       merchant_key: process.env.merchant_key,
       amount: total.toFixed(2),
@@ -50,7 +50,7 @@ export async function POST(req) {
 
     const queryString = new URLSearchParams(payfastParams).toString();
 
-    const payfastUrl = `https://sandbox.payfast.co.za/eng/process?${queryString}`;
+    const payfastUrl = `https://sandbox.payfast.co.za/eng/process?${queryString}&return_url=${process.env.PAYFAST_RETURN_URL}&cancel_url=${process.env.PAYFAST_CANCEL_URL}&notify_url=${process.env.PAYFAST_NOTIFY_URL}`;
 
     return NextResponse.json({ success: true, url: payfastUrl });
 
