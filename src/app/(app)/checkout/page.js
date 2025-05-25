@@ -8,7 +8,6 @@ import axios from "axios";
 
 export default function CheckoutPage() {
   const { cartItems, removeFromCart } = UseCartStore();
-  console.log(cartItems," this is catr itmems");
   console.log(removeFromCart," this is removecatr itmems");
   const [formData, setFormData] = useState({
     email: "",
