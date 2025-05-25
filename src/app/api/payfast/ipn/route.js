@@ -7,13 +7,14 @@ export async function POST(req) {
   // const passphrase = process.env.PAYFAST_PASSPHRASE || "";
 
   // Skip signature validation for now
-
+  console.log(rawData)
+  console.log(bodyText)
   if (rawData.payment_status === "COMPLETE") {
     try {
       const client = await clientPromise;
       const db = client.db("OrderDB");
       const orders = db.collection("orders");
-
+ 
       const existing = await orders.findOne({ payfast_payment_id: rawData.pf_payment_id });
       if (existing) {
         console.log("⚠️ Duplicate payment detected:", rawData.pf_payment_id);
