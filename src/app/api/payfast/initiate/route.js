@@ -1,19 +1,27 @@
-// /app/api/payfast/initiate/route.js
-
 import clientPromise from "@/lib/dbConnect";
 import { NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
+import crypto from "crypto";
 
 export async function POST(req) {
   try {
     const body = await req.json();
     const { formData, cartItems, total } = body;
 
+    // Validate input data
+    if (!formData || !cartItems || !total) {
+      return NextResponse.json(
+        { success: false, message: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
     const client = await clientPromise;
     const db = client.db("OrderDB");
     const orders = db.collection("orders");
 
-    const result = await orders.insertOne({
+    // Create order document
+    const orderDoc = {
       customer: {
         email: formData.email,
         firstName: formData.firstName,
@@ -21,38 +29,54 @@ export async function POST(req) {
         city: formData.city,
         postalCode: formData.postalCode,
         phone: formData.phone,
-        address: formData.adress,
+        address: formData.address,
       },
       cartItems,
       total,
       payment: {
-        method: formData.paymentMethod,
+        method: "PayFast",
         status: "PENDING",
       },
       status: "PENDING",
       createdAt: new Date(),
-    });
+      updatedAt: new Date(),
+    };
 
+    const result = await orders.insertOne(orderDoc);
     const orderId = result.insertedId;
 
+    // Prepare PayFast parameters
     const payfastParams = {
       merchant_id: process.env.PAYFAST_MERCHANT_ID,
       merchant_key: process.env.PAYFAST_MERCHANT_KEY,
-      RETURN_URL: "https://hkbd.vercel.app",
-      CANCEL_URL: "https://hkbd.vercel.app/payment-cancel",
-      NOTIFY_URL: "https://hkbd.vercel.app/api/payfast/ipn",
-      merchant_id: process.env.merchant_id,
-      merchant_key: process.env.merchant_key,
+      return_url: `${process.env.BASE_URL}/order/success?orderId=${orderId}`,
+      cancel_url: `${process.env.BASE_URL}/order/cancel?orderId=${orderId}`,
+      notify_url: `${process.env.BASE_URL}/api/payfast/ipn`,
       amount: total.toFixed(2),
-      item_name: cartItems.map((item) => item.name).join(", "),
+      item_name: `Order #${orderId.toString()}`,
+      item_description: cartItems.map((item) => item.name).join(", "),
+      name_first: formData.firstName.substring(0, 100),
+      name_last: formData.lastName.substring(0, 100),
+      email_address: formData.email.substring(0, 255),
+      cell_number: formData.phone.replace(/[^0-9]/g, "").substring(0, 20),
       custom_str1: orderId.toString(),
+      m_payment_id: orderId.toString(),
     };
 
-    const queryString = new URLSearchParams(payfastParams).toString();
+    // Remove empty parameters
+    Object.keys(payfastParams).forEach(
+      (key) => payfastParams[key] == null && delete payfastParams[key]
+    );
 
-    const payfastUrl = `https://sandbox.payfast.co.za/eng/process?${queryString}&RETURN_URL=${"https://hkbd.vercel.app"}`;
+    // Generate parameter string
+    const parameterString = new URLSearchParams(payfastParams).toString();
+    const payfastUrl = `https://${process.env.PAYFAST_MODE === 'sandbox' ? 'sandbox' : 'www'}.payfast.co.za/eng/process?${parameterString}`;
 
-    return NextResponse.json({ success: true, url: payfastUrl });
+    return NextResponse.json({
+      success: true,
+      url: payfastUrl,
+      orderId: orderId.toString(),
+    });
   } catch (error) {
     console.error("❌ Error creating order:", error);
     return NextResponse.json(
