@@ -70,8 +70,7 @@ export async function POST(req) {
 
     // Generate parameter string
     const parameterString = new URLSearchParams(payfastParams).toString();
-    const payfastUrl = `https://${process.env.PAYFAST_MODE === 'sandbox' ? 'sandbox' : 'www'}.payfast.co.za/eng/process?${parameterString}`;
-
+    const payfastUrl = `https://sandbox.payfast.co.za/eng/process?${parameterString}`;
     return NextResponse.json({
       success: true,
       url: payfastUrl,
