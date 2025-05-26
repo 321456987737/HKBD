@@ -50,7 +50,7 @@ export async function POST(req) {
 
     const queryString = new URLSearchParams(payfastParams).toString();
 
-    const payfastUrl = `https://sandbox.payfast.co.za/eng/process?${queryString}`;
+    const payfastUrl = `https://sandbox.payfast.co.za/eng/process?${queryString}&RETURN_URL=${"https://hkbd.vercel.app"}`;
 
     return NextResponse.json({ success: true, url: payfastUrl });
   } catch (error) {
