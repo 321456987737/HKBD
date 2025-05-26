@@ -58,7 +58,7 @@ export async function POST(req) {
       name_first: formData.firstName.substring(0, 100),
       name_last: formData.lastName.substring(0, 100),
       email_address: formData.email.substring(0, 255),
-      cell_number: formData.phone.replace(/[^0-9]/g, "").substring(0, 20),
+      phone_number: formData.phone.replace(/[^0-9]/g, "").substring(0, 20),
       custom_str1: orderId.toString(),
       m_payment_id: orderId.toString(),
     };
