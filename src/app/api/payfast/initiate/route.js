@@ -21,16 +21,16 @@ export async function POST(req) {
         city: formData.city,
         postalCode: formData.postalCode,
         phone: formData.phone,
-        address: formData.adress
+        address: formData.adress,
       },
       cartItems,
       total,
       payment: {
         method: formData.paymentMethod,
-        status: "PENDING"
+        status: "PENDING",
       },
       status: "PENDING",
-      createdAt: new Date()
+      createdAt: new Date(),
     });
 
     const orderId = result.insertedId;
@@ -38,24 +38,26 @@ export async function POST(req) {
     const payfastParams = {
       merchant_id: process.env.PAYFAST_MERCHANT_ID,
       merchant_key: process.env.PAYFAST_MERCHANT_KEY,
-      // return_url: process.env.PAYFAST_RETURN_URL,
-      // cancel_url: process.env.PAYFAST_CANCEL_URL,
-      // notify_url: process.env.PAYFAST_NOTIFY_URL,
+      RETURN_URL: "https://hkbd.vercel.app",
+      CANCEL_URL: "https://hkbd.vercel.app/payment-cancel",
+      NOTIFY_URL: "https://hkbd.vercel.app/api/payfast/ipn",
       merchant_id: process.env.merchant_id,
       merchant_key: process.env.merchant_key,
       amount: total.toFixed(2),
       item_name: cartItems.map((item) => item.name).join(", "),
-      custom_str1: orderId.toString()
+      custom_str1: orderId.toString(),
     };
 
     const queryString = new URLSearchParams(payfastParams).toString();
 
-    const payfastUrl = `https://sandbox.payfast.co.za/eng/process?${queryString}&return_url=${process.env.PAYFAST_RETURN_URL}&cancel_url=${process.env.PAYFAST_CANCEL_URL}&notify_url=${process.env.PAYFAST_NOTIFY_URL}`;
+    const payfastUrl = `https://sandbox.payfast.co.za/eng/process?${queryString}`;
 
     return NextResponse.json({ success: true, url: payfastUrl });
-
   } catch (error) {
     console.error("❌ Error creating order:", error);
-    return NextResponse.json({ success: false, message: "Server error" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: "Server error" },
+      { status: 500 }
+    );
   }
 }
