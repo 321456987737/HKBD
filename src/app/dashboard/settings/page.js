@@ -11,8 +11,10 @@ import {
   KeyIcon
 } from '@heroicons/react/24/outline';
 import Image from 'next/image';
-
+import { useSession } from 'next-auth/react';
 const SettingsPage = () => {
+  const { data: session } = useSession();
+  console.log('Session Data:', session);
   const [activeTab, setActiveTab] = useState('profile');
   const [admins, setAdmins] = useState([
     { id: 1, name: 'Admin User', email: 'admin@example.com', role: 'super-admin' }

@@ -1,242 +1,333 @@
 "use client";
-import { useState } from 'react';
+
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
 import {
-  ChevronUpDownIcon,
-  EllipsisVerticalIcon,
-  MagnifyingGlassIcon,
-  FunnelIcon,
-  ArrowDownTrayIcon,
-} from '@heroicons/react/24/outline';
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { ArrowPathIcon } from "@heroicons/react/24/outline";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { MoreHorizontal, ChevronDown, Loader2 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 
-const OrdersPage = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('all');
-  const [sortConfig, setSortConfig] = useState({ key: 'date', direction: 'desc' });
-  const [selectedOrders, setSelectedOrders] = useState(new Set());
-  const [currentPage, setCurrentPage] = useState(1);
-  const [viewOrder, setViewOrder] = useState(null);
+const STATUS_OPTIONS = ["PENDING", "PROCESSING", "SHIPPED", "COMPLETED", "CANCELLED"];
 
-  // ✅ Store orders in state so we can update them
-  const [orders, setOrders] = useState([
-    {
-      id: '#12345',
-      customer: 'John Doe',
-      date: '2024-03-15',
-      status: 'pending',
-      total: 249.99,
-      payment: 'credit_card',
-      items: 3,
-      tracking: '1Z2345ABCD6789',
-    },
-    {
-      id: '#12346',
-      customer: 'Jane Smith',
-      date: '2024-03-16',
-      status: 'shipped',
-      total: 139.5,
-      payment: 'paypal',
-      items: 2,
-      tracking: '1Z9999XYZ1234',
-    },
-  ]);
+export default function OrdersPage() {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [expandedOrder, setExpandedOrder] = useState(null);
+  const [updatingStatusId, setUpdatingStatusId] = useState(null);
 
-  const statusOptions = [
-    { value: 'all', label: 'All Orders' },
-    { value: 'pending', label: 'Pending', color: 'bg-yellow-100 text-yellow-800' },
-    { value: 'processing', label: 'Processing', color: 'bg-blue-100 text-blue-800' },
-    { value: 'shipped', label: 'Shipped', color: 'bg-purple-100 text-purple-800' },
-    { value: 'delivered', label: 'Delivered', color: 'bg-green-100 text-green-800' },
-    { value: 'cancelled', label: 'Cancelled', color: 'bg-red-100 text-red-800' },
-  ];
+  const itemsPerPage = 5;
 
-  const filteredOrders = orders.filter((order) => {
-    const matchesSearch = order.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          order.id.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = selectedStatus === 'all' || order.status === selectedStatus;
-    return matchesSearch && matchesStatus;
-  });
-
-  const sortedOrders = [...filteredOrders].sort((a, b) => {
-    if (a[sortConfig.key] < b[sortConfig.key]) return sortConfig.direction === 'asc' ? -1 : 1;
-    if (a[sortConfig.key] > b[sortConfig.key]) return sortConfig.direction === 'asc' ? 1 : -1;
-    return 0;
-  });
-
-  const itemsPerPage = 10;
-  const paginatedOrders = sortedOrders.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  // ✅ Function to update status
-  const handleUpdateStatus = (orderId, newStatus) => {
-    const updatedOrders = orders.map(order =>
-      order.id === orderId ? { ...order, status: newStatus } : order
-    );
-    setOrders(updatedOrders);
-    setViewOrder(null); // close modal
+  const fetchOrders = async (isLoadMore = false) => {
+    try {
+      isLoadMore ? setLoadingMore(true) : setLoading(true);
+      const lastId = isLoadMore && orders.length > 0 ? orders[orders.length - 1]._id : null;
+      const res = await axios.get(`/api/orders?limit=${itemsPerPage}${lastId ? `&lastId=${lastId}` : ""}`);
+      const newOrders = res.data.orders;
+      setHasMore(res.data.hasMore);
+      isLoadMore ? setOrders((prev) => [...prev, ...newOrders]) : setOrders(newOrders);
+    } catch (err) {
+      console.error("Failed to fetch orders:", err);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
   };
 
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  const handleRefresh = () => {
+    setOrders([]);
+    setHasMore(true);
+    fetchOrders();
+  };
+
+  const handleLoadMore = () => {
+    if (hasMore && !loadingMore) {
+      fetchOrders(true);
+    }
+  };
+
+  const toggleOrderDetails = (orderId) => {
+    setExpandedOrder(expandedOrder === orderId ? null : orderId);
+  };
+
+  const formatPrice = (price) => {
+    if (!price) return "Rs 0";
+    return new Intl.NumberFormat("en-PK", {
+      style: "currency",
+      currency: "PKR",
+    })
+      .format(Number(price))
+      .replace("PKR", "Rs");
+  };
+
+  const getStatusVariant = (status) => {
+    switch (status) {
+      case "PENDING":
+        return "secondary";
+      case "COMPLETED":
+        return "default";
+      case "CANCELLED":
+        return "destructive";
+      case "PROCESSING":
+      case "SHIPPED":
+        return "outline";
+      default:
+        return "secondary";
+    }
+  };
+
+ const updateOrderStatus = async (orderId, newStatus) => {
+  try {
+    setUpdatingStatusId(orderId);
+    await axios.patch(`/api/orders`, {
+      orderId,
+      updates: { status: newStatus }
+    });
+    setOrders((prev) =>
+      prev.map((order) =>
+        order._id === orderId ? { ...order, status: newStatus } : order
+      )
+    );
+  } catch (error) {
+    console.error("Failed to update status:", error);
+  } finally {
+    setUpdatingStatusId(null);
+  }
+};
+
+  if (loading && !loadingMore && orders.length === 0) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-white">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full p-6 bg-white rounded-lg shadow-sm">
-      {/* Header */}
-      <div className="mb-6 flex flex-col md:flex-row justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Order Management</h1>
-          <p className="text-gray-600 mt-1">Manage and track customer orders</p>
+    <div className="space-y-6 w-full bg-white px-6">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+        <h1 className="text-2xl font-bold tracking-tight">Order Management</h1>
+        <div className="text-sm text-muted-foreground">
+          Showing {orders.length} {orders.length === 1 ? "order" : "orders"}
+          {hasMore && !loading && " (more available)"}
         </div>
-        <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
-          Create New Order
+      </div>
+
+      <Card>
+        <CardContent className="p-0">
+          <div className="overflow-auto">
+            <Table>
+              <TableHeader className="bg-muted/50">
+                <TableRow>
+                  <TableHead className="w-[120px]">Order ID</TableHead>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Contact</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead className="w-[50px]">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {orders.length === 0 && !loading ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-24 text-center">
+                      No orders found
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  orders.map((order) => (
+                    <OrderRow
+                      key={order._id}
+                      order={order}
+                      expandedOrder={expandedOrder}
+                      toggleOrderDetails={toggleOrderDetails}
+                      formatPrice={formatPrice}
+                      getStatusVariant={getStatusVariant}
+                      updateOrderStatus={updateOrderStatus}
+                      updatingStatusId={updatingStatusId}
+                    />
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-center w-full items-center mt-4">
+        <button
+          onClick={handleRefresh}
+          className="hover:bg-slate-100 p-2 rounded-full transition-all"
+          disabled={loading}
+        >
+          <ArrowPathIcon className={`h-6 w-6 hover:cursor-pointer transition-all ${loading ? "animate-spin" : ""}`} />
         </button>
       </div>
 
-      {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="Search orders..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full p-2 pl-10 border rounded-lg"
-          />
-          <MagnifyingGlassIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-        </div>
-        <div className="relative">
-          <select
-            value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
-            className="w-full p-2 pl-10 border rounded-lg"
+      {hasMore && orders.length > 0 && (
+        <div className="flex justify-center">
+          <Button
+            onClick={handleLoadMore}
+            disabled={loadingMore}
+            variant="outline"
+            className="w-40 gap-2"
           >
-            {statusOptions.map(option => (
-              <option key={option.value} value={option.value}>{option.label}</option>
-            ))}
-          </select>
-          <FunnelIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-        </div>
-        <div className="flex gap-2">
-          <button className="px-4 py-2 border rounded-lg hover:bg-gray-50">
-            <ArrowDownTrayIcon className="h-5 w-5" /> Export
-          </button>
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="overflow-x-auto rounded-lg border">
-        <table className="w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="p-3"><input type="checkbox" /></th>
-              {['id', 'date', 'customer', 'status', 'total', 'actions'].map((key) => (
-                <th
-                  key={key}
-                  className="p-3 text-left text-sm font-medium cursor-pointer"
-                  onClick={() => key !== 'actions' && setSortConfig({
-                    key,
-                    direction: sortConfig.key === key && sortConfig.direction === 'asc' ? 'desc' : 'asc'
-                  })}
-                >
-                  <div className="flex items-center gap-1 capitalize">
-                    {key}
-                    <ChevronUpDownIcon className="h-4 w-4" />
-                  </div>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {paginatedOrders.map(order => (
-              <tr key={order.id} className="hover:bg-gray-50">
-                <td className="p-3"><input type="checkbox" /></td>
-                <td className="p-3 font-medium">{order.id}</td>
-                <td className="p-3">{new Date(order.date).toLocaleDateString()}</td>
-                <td className="p-3">{order.customer}</td>
-                <td className="p-3">
-                  <span className={`px-2 py-1 rounded-full text-sm ${
-                    statusOptions.find(s => s.value === order.status)?.color
-                  }`}>
-                    {order.status}
-                  </span>
-                </td>
-                <td className="p-3 font-medium">${order.total.toFixed(2)}</td>
-                <td className="p-3">
-                  <button onClick={() => setViewOrder(order)} className="p-2 hover:bg-gray-100 rounded-lg">
-                    <EllipsisVerticalIcon className="h-5 w-5" />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Pagination */}
-      <div className="mt-6 flex justify-between items-center">
-        <span className="text-sm text-gray-700">
-          Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, sortedOrders.length)} of {sortedOrders.length}
-        </span>
-        <div className="flex gap-2">
-          <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} className="px-3 py-1 rounded bg-gray-100 hover:bg-gray-200">Previous</button>
-          {Array.from({ length: Math.ceil(sortedOrders.length / itemsPerPage) }).map((_, i) => (
-            <button
-              key={i + 1}
-              onClick={() => setCurrentPage(i + 1)}
-              className={`px-3 py-1 rounded ${currentPage === i + 1 ? 'bg-indigo-600 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
-            >
-              {i + 1}
-            </button>
-          ))}
-          <button onClick={() => setCurrentPage(p => Math.min(p + 1, Math.ceil(sortedOrders.length / itemsPerPage)))} className="px-3 py-1 rounded bg-gray-100 hover:bg-gray-200">Next</button>
-        </div>
-      </div>
-
-      {/* Modal */}
-      {viewOrder && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl shadow-lg">
-            <div className="flex justify-between items-start mb-4">
-              <h2 className="text-xl font-bold">Order Details - {viewOrder.id}</h2>
-              <button onClick={() => setViewOrder(null)} className="text-gray-500 hover:text-gray-700">✕</button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <h3 className="font-medium mb-2">Customer Information</h3>
-                <p>{viewOrder.customer}</p>
-                <p className="text-gray-600">Contact: customer@example.com</p>
-              </div>
-              <div>
-                <h3 className="font-medium mb-2">Shipping Details</h3>
-                <p>123 Main Street</p>
-                <p>New York, NY 10001</p>
-                <p className="text-blue-600">Tracking: {viewOrder.tracking}</p>
-              </div>
-            </div>
-
-            {/* Status Update */}
-            <div className="mt-6 flex flex-col md:flex-row justify-end gap-4">
-              <select
-                value={viewOrder.status}
-                onChange={(e) => setViewOrder({ ...viewOrder, status: e.target.value })}
-                className="border rounded-lg p-2"
-              >
-                {statusOptions.filter(s => s.value !== 'all').map((s) => (
-                  <option key={s.value} value={s.value}>{s.label}</option>
-                ))}
-              </select>
-
-              <button
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-                onClick={() => handleUpdateStatus(viewOrder.id, viewOrder.status)}
-              >
-                Save Status
-              </button>
-            </div>
-          </div>
+            {loadingMore ? <Loader2 className="h-4 w-4 animate-spin" /> : <ChevronDown className="h-4 w-4" />}
+            {loadingMore ? "Loading..." : "Load More"}
+          </Button>
         </div>
       )}
     </div>
   );
-};
+}
 
-export default OrdersPage;
+function OrderRow({
+  order,
+  expandedOrder,
+  toggleOrderDetails,
+  formatPrice,
+  getStatusVariant,
+  updateOrderStatus,
+  updatingStatusId,
+}) {
+  return (
+    <>
+      <TableRow key={order._id} className="hover:bg-muted/50">
+        <TableCell className="font-medium">
+          #{order._id.toString().slice(-6).toUpperCase()}
+        </TableCell>
+        <TableCell>
+          {order.customer?.firstName} {order.customer?.lastName}
+        </TableCell>
+        <TableCell>
+          <div className="text-sm">{order.customer?.email}</div>
+          <div className="text-xs text-muted-foreground">{order.customer?.phone}</div>
+        </TableCell>
+        <TableCell className="text-right">{formatPrice(order.total)}</TableCell>
+        <TableCell>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="capitalize px-2 py-1 h-auto text-xs">
+                {updatingStatusId === order._id ? (
+                  <Loader2 className="animate-spin h-4 w-4" />
+                ) : (
+                  order.status?.toLowerCase()
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {STATUS_OPTIONS.map((status) => (
+                <DropdownMenuItem
+                  key={status}
+                  onClick={() => updateOrderStatus(order._id, status)}
+                >
+                  {status}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </TableCell>
+        <TableCell>
+          {order.createdAt ? format(new Date(order.createdAt), "MMM dd, yyyy") : "N/A"}
+        </TableCell>
+        <TableCell>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => toggleOrderDetails(order._id)}>
+                {expandedOrder === order._id ? "Hide details" : "View details"}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </TableCell>
+      </TableRow>
+      {expandedOrder === order._id && (
+        <TableRow className="bg-muted/10">
+          <TableCell colSpan={7}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
+              <div className="space-y-4">
+                <h3 className="font-medium text-lg">Customer Details</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div><p className="text-muted-foreground">Name</p><p>{order.customer?.firstName} {order.customer?.lastName}</p></div>
+                  <div><p className="text-muted-foreground">Email</p><p>{order.customer?.email}</p></div>
+                  <div><p className="text-muted-foreground">Phone</p><p>{order.customer?.phone}</p></div>
+                  <div><p className="text-muted-foreground">Address</p><p>{order.customer?.address || "Not provided"}</p></div>
+                  <div><p className="text-muted-foreground">City</p><p>{order.customer?.city}</p></div>
+                  <div><p className="text-muted-foreground">Postal Code</p><p>{order.customer?.postalCode}</p></div>
+                  <div><p className="text-muted-foreground">Order ID</p><p>{order._id}</p></div>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <h3 className="font-medium text-lg">Order Summary</h3>
+                <div className="space-y-3">
+                  {order.cartItems?.map((item, index) => (
+                    <div key={index} className="flex justify-between items-center text-sm p-2 rounded-md bg-muted/20">
+                      <div>
+                        <p className="font-medium">{item.name || "Unknown Product"}</p>
+                        <p className="text-muted-foreground text-xs">
+                          {item.quantity} × {formatPrice(item.price)}
+                        </p>
+                        {item.size && <p className="text-muted-foreground text-xs">Size: {item.size}</p>}
+                        {item.color && <p className="text-muted-foreground text-xs">Color: {item.color}</p>}
+                      </div>
+                      <div className="font-medium">{formatPrice(item.price * item.quantity)}</div>
+                    </div>
+                  ))}
+                  <div className="border-t pt-3 mt-2 space-y-2">
+                    <div className="flex justify-between font-medium">
+                      <span>Subtotal</span>
+                      <span>{formatPrice(order.subtotal || order.total)}</span>
+                    </div>
+                    {order.discount > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Discount</span>
+                        <span className="text-destructive">-{formatPrice(order.discount)}</span>
+                      </div>
+                    )}
+                    {order.shipping > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Shipping</span>
+                        <span>+{formatPrice(order.shipping)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-lg font-bold pt-2 border-t">
+                      <span>Total</span>
+                      <span>{formatPrice(order.total)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </TableCell>
+        </TableRow>
+      )}
+    </>
+  );
+}
