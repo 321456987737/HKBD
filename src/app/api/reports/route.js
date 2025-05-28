@@ -53,17 +53,16 @@ export async function POST(req) {  // Changed from PATCH to POST
     const client = await clientPromise;
     const db = client.db("ReportsDB");
     const reportsCollection = db.collection("reports");
-
+    
     const body = await req.json();
     const { report, username, email } = body;
-
+      console.log(email, username, report);
     if (!report || !username || !email) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
       );
     }
-
     const newReport = {
       report,
       username,
@@ -72,7 +71,6 @@ export async function POST(req) {  // Changed from PATCH to POST
       status: "unresolved",  // Add default status
       createdAt: new Date(),
     };
-
     const result = await reportsCollection.insertOne(newReport);
 
     return NextResponse.json({

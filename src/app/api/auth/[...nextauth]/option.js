@@ -99,7 +99,7 @@ export const authOptions = {
         session.user = {
           id: token.id,
           email: token.email,
-          username: token.name,
+          username: token.username,
         };
       }
       return session;
