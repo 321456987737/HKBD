@@ -88,7 +88,7 @@ function ProductsContent() {
                   <div className="relative h-56 w-full bg-gray-100">
                     {product.primaryimage ? (
                       <Image
-                        src={product.primaryimage}
+                         src={product.primaryimage}
                         alt={product.name}
                         fill
                         className="object-cover cursor-pointer transition-transform duration-300"

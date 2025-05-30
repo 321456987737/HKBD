@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import MainSlider from "@/components/sliders/MainSlider";
 import InfiniteTicker from "@/components/InfiniteTicker";
 import ProductSection from "@/components/productSection/subproduct";
@@ -8,7 +8,34 @@ import images from "@/Assets/images";
 import ProductSlider from "@/components/sliders/ProductSlider";
 import { MessageCircle } from "lucide-react";
 import ContactPopup from "@/components/reports/page";
+import axios from "axios";
 function Home() {
+  useEffect(() => {
+    const hasLogged = sessionStorage.getItem("visitLogged");
+    console.log("hasLogged", hasLogged);
+    if (hasLogged) return;
+
+    let visitorId = localStorage.getItem("visitorId");
+    if (!visitorId) {
+      visitorId = crypto.randomUUID();
+      localStorage.setItem("visitorId", visitorId);
+    }
+
+    axios
+      .post("/api/track-visit", {
+        visitorId,
+        path: window.location.pathname,
+      })
+      .then((res) => {
+        console.log("Visit logged:", res.data);
+      })
+      .catch((err) => {
+        console.error("Failed to log visit:", err);
+      });
+
+    sessionStorage.setItem("visitLogged", "true");
+  }, []);
+
   const [open, setOpen] = useState(false);
 
   const mens = [
@@ -48,7 +75,6 @@ function Home() {
       <ProductSection title="boys" images={boys} category="Boys" />
       <ProductSection title="girl" images={girl} category="Girls" />
       <ProductSlider />
-
 
       {open && <ContactPopup onClose={() => setOpen(false)} />}
       <div className="fixed bottom-12 right-12 z-50 group">
