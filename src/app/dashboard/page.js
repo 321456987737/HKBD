@@ -54,7 +54,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [analytics, setAnalytics] = useState(null);
-
+  const [Orders, setOrders] = useState([]);
   useEffect(() => {
     const getdata = async () => {
       try {
@@ -69,20 +69,14 @@ export default function DashboardPage() {
     getdata();
   }, []);
 
-  const {
-    totalorders,
-    ordersThisMonth,
-    ordersLastMonth,
-    ordersTwoMonthsAgo,
-    totalUsers,
-    thisMonthUsers,
-    lastMonthUsers,
-    twoMonthsAgoUsers,
-    totalRevenue,
-    completedOrderCount,
-    thismonthrevenue
-  } = analytics || {};
-  
+  const getRevcentOrders = async () => {
+    const res = await axios.get("/api/orders");
+    setOrders(res.data.orders);
+    console.log("Recent Orders:", res.data.orders);
+  };
+  useEffect(() => {
+    getRevcentOrders();
+  }, []);
 
   if (loading) {
     return (
@@ -123,6 +117,30 @@ export default function DashboardPage() {
         return "bg-gray-100 text-gray-800";
     }
   };
+
+  //delete that after few times
+  const customerSatisfaction = [
+    {
+      subject: "Orders",
+      A: 320, // 2023 delivered orders
+      B: 280, // 2022 delivered orders
+    },
+    {
+      subject: "Users",
+      A: 520,
+      B: 490,
+    },
+    {
+      subject: "Reports",
+      A: 110,
+      B: 140,
+    },
+    {
+      subject: "Products",
+      A: 420,
+      B: 390,
+    },
+  ];
 
   return (
     <div className="min-h-screen w-screen bg-gray-50 p-4 md:p-8">
@@ -215,8 +233,7 @@ export default function DashboardPage() {
               </div>
             </div>
           ))}
-           
-        </div> 
+        </div>
 
         {/* First Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
@@ -351,37 +368,56 @@ export default function DashboardPage() {
         {/* Second Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Area Chart */}
- <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-lg font-semibold text-gray-900">Customer Activity</h2>
-        <div className="text-sm text-gray-500">Last 24 hours</div>
-      </div>
-      <div className="h-80">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={analytics.customerActivity}>
-            <defs>
-              <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#6366F1" stopOpacity={0.8} />
-                <stop offset="95%" stopColor="#6366F1" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
-            <XAxis dataKey="hour" tick={{ fill: "#6B7280" }} axisLine={{ stroke: "#E5E7EB" }} />
-            <YAxis tick={{ fill: "#6B7280" }} axisLine={{ stroke: "#E5E7EB" }} />
-            <Tooltip content={<CustomTooltip />} />
-            <Area
-              type="monotone"
-              dataKey="active"
-              stroke="#6366F1"
-              strokeWidth={2}
-              fillOpacity={1}
-              fill="url(#areaGradient)"
-              name="Active Users"
-            />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
+          <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-lg font-semibold text-gray-900">
+                Customer Activity
+              </h2>
+              <div className="text-sm text-gray-500">Last 24 hours</div>
+            </div>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={analytics.customerActivity}>
+                  <defs>
+                    <linearGradient
+                      id="areaGradient"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop offset="5%" stopColor="#6366F1" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#6366F1" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    vertical={false}
+                    stroke="#E5E7EB"
+                  />
+                  <XAxis
+                    dataKey="hour"
+                    tick={{ fill: "#6B7280" }}
+                    axisLine={{ stroke: "#E5E7EB" }}
+                  />
+                  <YAxis
+                    tick={{ fill: "#6B7280" }}
+                    axisLine={{ stroke: "#E5E7EB" }}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Area
+                    type="monotone"
+                    dataKey="active"
+                    stroke="#6366F1"
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#areaGradient)"
+                    name="Active Users"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
 
           {/* Radar Chart */}
           <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
@@ -401,7 +437,7 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="h-80">
-              {/* <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%">
                 <RadarChart
                   cx="50%"
                   cy="50%"
@@ -442,7 +478,7 @@ export default function DashboardPage() {
                     )}
                   />
                 </RadarChart>
-              </ResponsiveContainer> */}
+              </ResponsiveContainer>
             </div>
           </div>
         </div>
@@ -455,20 +491,20 @@ export default function DashboardPage() {
               <h2 className="text-lg font-semibold text-gray-900">
                 Sales vs Returns
               </h2>
-              <button className="text-indigo-600 text-sm font-medium">
+              <button className="text-indigo-600 text-sm font-medium hover:underline">
                 Export data
               </button>
             </div>
             <div className="h-80">
-              {/* <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={analytics.salesVsReturns}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={analytics.ordersStatusByMonth}>
                   <CartesianGrid
                     strokeDasharray="3 3"
                     vertical={false}
                     stroke="#E5E7EB"
                   />
                   <XAxis
-                    dataKey="date"
+                    dataKey="month"
                     tick={{ fill: "#6B7280" }}
                     axisLine={{ stroke: "#E5E7EB" }}
                   />
@@ -484,19 +520,19 @@ export default function DashboardPage() {
                     )}
                   />
                   <Bar
-                    dataKey="orders"
+                    dataKey="completed"
                     fill="#6366F1"
-                    name="Orders"
+                    name="Completed"
                     radius={[4, 4, 0, 0]}
                   />
                   <Bar
-                    dataKey="returns"
+                    dataKey="cancelled"
                     fill="#F43F5E"
-                    name="Returns"
+                    name="Cancelled"
                     radius={[4, 4, 0, 0]}
                   />
                 </BarChart>
-              </ResponsiveContainer> */}
+              </ResponsiveContainer>
             </div>
           </div>
         </div>
@@ -532,19 +568,25 @@ export default function DashboardPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {/* {analytics.recentOrders.map((order, index) => (
+                  {Orders.map((order, index) => (
                     <tr
-                      key={index}
+                      key={order._id}
                       className="border-b border-gray-100 hover:bg-gray-50"
                     >
                       <td className="py-3 text-sm font-medium text-gray-900">
-                        {order.id}
+                        {order._id.slice(-6)} {/* short order ID */}
                       </td>
-                      <td className="py-3 text-sm text-gray-600">
-                        {order.customer}
+                      <td className="py-3 text-sm text-gray-600 leading-relaxed">
+                        <div>
+                          <strong>
+                            {order.customer.firstName} {order.customer.lastName}
+                          </strong>
+                        </div>
+                        <div>{order.customer.email}</div>
+                        <div>{order.customer.phone}</div>
                       </td>
                       <td className="py-3 text-sm font-medium text-gray-900">
-                        {order.amount}
+                        Rs. {order.total.toLocaleString()}
                       </td>
                       <td className="py-3">
                         <span
@@ -556,7 +598,7 @@ export default function DashboardPage() {
                         </span>
                       </td>
                     </tr>
-                  ))} */}
+                  ))}
                 </tbody>
               </table>
             </div>
@@ -573,53 +615,47 @@ export default function DashboardPage() {
               </button>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-3 text-sm font-medium text-gray-500">
-                      Product
-                    </th>
-                    <th className="text-left py-3 text-sm font-medium text-gray-500">
-                      Sales
-                    </th>
-                    <th className="text-left py-3 text-sm font-medium text-gray-500">
-                      Revenue
-                    </th>
-                    <th className="text-left py-3 text-sm font-medium text-gray-500">
-                      Trend
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {/* {analytics.topProducts.map((product, index) => (
-                    <tr
-                      key={index}
-                      className="border-b border-gray-100 hover:bg-gray-50"
-                    >
-                      <td className="py-3 text-sm font-medium text-gray-900">
-                        {product.name}
-                      </td>
-                      <td className="py-3 text-sm text-gray-600">
-                        {product.sales}
-                      </td>
-                      <td className="py-3 text-sm font-medium text-gray-900">
-                        {product.revenue}
-                      </td>
-                      <td className="py-3">
-                        <span
-                          className={`text-sm ${
-                            product.trend.startsWith("+")
-                              ? "text-green-500"
-                              : "text-red-500"
-                          }`}
-                        >
-                          {product.trend}
-                        </span>
-                      </td>
-                    </tr>
-                  ))} */}
-                </tbody>
-              </table>
+           <table className="w-full">
+  <thead>
+    <tr className="border-b border-gray-200">
+      <th className="text-left py-3 text-sm font-medium text-gray-500">
+        Product ID
+      </th>
+      <th className="text-left py-3 text-sm font-medium text-gray-500">
+        Sales
+      </th>
+      <th className="text-left py-3 text-sm font-medium text-gray-500">
+        Revenue
+      </th>
+      <th className="text-left py-3 text-sm font-medium text-gray-500">
+        Trend
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    {analytics.topProducts.map((product, index) => (
+      <tr
+        key={product.productId}
+        className="border-b border-gray-100 hover:bg-gray-50"
+      >
+        <td className="py-3 text-sm font-medium text-gray-900">
+          {product.productId}
+        </td>
+        <td className="py-3 text-sm text-gray-600">
+          {product.totalQuantity}
+        </td>
+        <td className="py-3 text-sm font-medium text-gray-900">
+          {/* Placeholder, replace with actual revenue if available */}
+          {"—"}
+        </td>
+        <td className="py-3">
+          {/* Placeholder, replace with actual trend if available */}
+          <span className="text-sm text-gray-400">—</span>
+        </td>
+      </tr>
+    ))}
+  </tbody>
+</table>
             </div>
           </div>
         </div>
