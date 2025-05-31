@@ -1,7 +1,5 @@
 import clientPromise from "@/lib/dbConnect";
 import { NextResponse } from "next/server";
-import { ObjectId } from "mongodb";
-import crypto from "crypto";
 
 export async function POST(req) {
   try {
@@ -34,8 +32,9 @@ export async function POST(req) {
       cartItems,
       total,
       payment: {
-        method: "PayFast",
+        method: "payfast",
         status: "PENDING",
+        amount: total,
       },
       status: "PENDING",
       createdAt: new Date(),
@@ -47,8 +46,8 @@ export async function POST(req) {
 
     // Prepare PayFast parameters
     const payfastParams = {
-      merchant_id: 10039135,
-      merchant_key: "o9aid5znsobbg",
+      merchant_id: process.env.merchant_id,
+      merchant_key: process.env.merchant_key,
       return_url: `${"https://hkbd.vercel.app"}/payment-success?orderId=${orderId}`,
       cancel_url: `${"https://hkbd.vercel.app"}/payment-cancel?orderId=${orderId}`, 
       notify_url: `${"https://hkbd.vercel.app"}/api/payfast/ipn`,

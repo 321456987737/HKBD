@@ -615,47 +615,47 @@ export default function DashboardPage() {
               </button>
             </div>
             <div className="overflow-x-auto">
-           <table className="w-full">
-  <thead>
-    <tr className="border-b border-gray-200">
-      <th className="text-left py-3 text-sm font-medium text-gray-500">
-        Product ID
-      </th>
-      <th className="text-left py-3 text-sm font-medium text-gray-500">
-        Sales
-      </th>
-      <th className="text-left py-3 text-sm font-medium text-gray-500">
-        Revenue
-      </th>
-      <th className="text-left py-3 text-sm font-medium text-gray-500">
-        Trend
-      </th>
-    </tr>
-  </thead>
-  <tbody>
-    {analytics.topProducts.map((product, index) => (
-      <tr
-        key={product.productId}
-        className="border-b border-gray-100 hover:bg-gray-50"
-      >
-        <td className="py-3 text-sm font-medium text-gray-900">
-          {product.productId}
-        </td>
-        <td className="py-3 text-sm text-gray-600">
-          {product.totalQuantity}
-        </td>
-        <td className="py-3 text-sm font-medium text-gray-900">
-          {/* Placeholder, replace with actual revenue if available */}
-          {"—"}
-        </td>
-        <td className="py-3">
-          {/* Placeholder, replace with actual trend if available */}
-          <span className="text-sm text-gray-400">—</span>
-        </td>
-      </tr>
-    ))}
-  </tbody>
-</table>
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-3 text-sm font-medium text-gray-500">
+                      Product ID
+                    </th>
+                    <th className="text-left py-3 text-sm font-medium text-gray-500">
+                      Sales
+                    </th>
+                    <th className="text-left py-3 text-sm font-medium text-gray-500">
+                      Revenue
+                    </th>
+                    <th className="text-left py-3 text-sm font-medium text-gray-500">
+                      Trend
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {analytics.topProducts.map((product, index) => (
+                    <tr
+                      key={product.productId}
+                      className="border-b border-gray-100 hover:bg-gray-50"
+                    >
+                      <td className="py-3 text-sm font-medium text-gray-900">
+                        {product.productId}
+                      </td>
+                      <td className="py-3 text-sm text-gray-600">
+                        {product.totalQuantity}
+                      </td>
+                      <td className="py-3 text-sm font-medium text-gray-900">
+                        {/* Placeholder, replace with actual revenue if available */}
+                        {"—"}
+                      </td>
+                      <td className="py-3">
+                        {/* Placeholder, replace with actual trend if available */}
+                        <span className="text-sm text-gray-400">—</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
