@@ -45,22 +45,24 @@ export async function POST(req) {
     const orderId = result.insertedId;
 
     // Prepare PayFast parameters
-    const payfastParams = {
-      merchant_id: `process.env.merchant_id`,
-      merchant_key: `process.env.merchant_key`,
-      return_url: `${"https://hkbd.vercel.app"}/payment-success?orderId=${orderId}`,
-      cancel_url: `${"https://hkbd.vercel.app"}/payment-cancel?orderId=${orderId}`, 
-      notify_url: `${"https://hkbd.vercel.app"}/api/payfast/ipn`,
-      amount: total.toFixed(2),
-      item_name: `Order #${orderId.toString()}`,
-      item_description: cartItems.map((item) => item.name).join(", "),
-      name_first: formData.firstName.substring(0, 100),
-      name_last: formData.lastName.substring(0, 100),
-      email_address: formData.email.substring(0, 255),
-      phone_number: formData.phone.replace(/[^0-9]/g, "").substring(0, 20),
-      custom_str1: orderId.toString(),
-      m_payment_id: orderId.toString(),
-    };
+    // Prepare PayFast parameters
+const payfastParams = {
+  merchant_id: process.env.merchant_id,
+  merchant_key: process.env.merchant_key,
+  return_url: `https://hkbd.vercel.app/payment-success?orderId=${orderId}`,
+  cancel_url: `https://hkbd.vercel.app/payment-cancel?orderId=${orderId}`, 
+  notify_url: `https://hkbd.vercel.app/api/payfast/ipn`,
+  amount: total.toFixed(2),
+  item_name: `Order #${orderId.toString()}`,
+  item_description: cartItems.map((item) => item.name).join(", "),
+  name_first: formData.firstName.substring(0, 100),
+  name_last: formData.lastName.substring(0, 100),
+  email_address: formData.email.substring(0, 255),
+  phone_number: formData.phone.replace(/[^0-9]/g, "").substring(0, 20),
+  custom_str1: orderId.toString(),
+  m_payment_id: orderId.toString(),
+};
+
 
     // Remove empty parameters
     Object.keys(payfastParams).forEach(
