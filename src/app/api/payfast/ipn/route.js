@@ -10,6 +10,7 @@ export async function POST(req) {
     console.log("IPN received:", rawData);
 
     // 1. Signature Verification
+
     const signature = rawData.signature;
     delete rawData.signature;
     const parameterString = Object.keys(rawData)
@@ -26,6 +27,13 @@ export async function POST(req) {
       .digest("hex");
     if (calculatedSignature !== signature) {
       console.error("❌ Invalid signature detected");
+      return NextResponse.json({ success: false }, { status: 403 });
+    }
+    if (calculatedSignature !== signature) {
+      console.error("❌ Invalid signature detected");
+      console.error("Calculated Signature:", calculatedSignature);
+      console.error("Received Signature:", signature);
+      console.error("Parameter String:", parameterString); // useful
       return NextResponse.json({ success: false }, { status: 403 });
     }
 
