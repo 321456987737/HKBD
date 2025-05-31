@@ -47,8 +47,8 @@ export async function POST(req) {
     // Prepare PayFast parameters
     // Prepare PayFast parameters
 const payfastParams = {
-  merchant_id: process.env.merchant_id,
-  merchant_key: process.env.merchant_key,
+  MERCHANT_ID: process.env.MERCHANT_ID,
+  MERCHANT_KEY: process.env.MERCHANT_KEY,
   return_url: `https://hkbd.vercel.app/payment-success?orderId=${orderId}`,
   cancel_url: `https://hkbd.vercel.app/payment-cancel?orderId=${orderId}`, 
   notify_url: `https://hkbd.vercel.app/api/payfast/ipn`,
