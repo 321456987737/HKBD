@@ -40,7 +40,6 @@ export default function CheckoutPage() {
 
       const { url } = response.data;
       window.location.href = url; // redirect to PayFast
-      alert("Redirecting to PayFast:", url);
     } catch (error) {
       console.error("Payment error:", error);
       alert("Something went wrong during payment.");
