@@ -5,7 +5,9 @@ import crypto from "crypto";
 
 export async function POST(req) {
   try {
+    
     const bodyText = await req.text();
+    console.log("Raw body text received:", bodyText);
     const rawData = Object.fromEntries(new URLSearchParams(bodyText));
     console.log("IPN received:", rawData);
 
